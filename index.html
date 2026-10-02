@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sight Word Wonder World</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka & Lexend -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .lexend {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        @keyframes bubbleUp {
+            0% { transform: translateY(120%) scale(0.8); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-120vh) scale(1.1); opacity: 0; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
+            50% { transform: scale(1.06); filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.9)); }
+        }
+
+        .animate-float {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+
+        .animate-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        .flip-card {
+            perspective: 1000px;
+        }
+
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .bubble-item {
+            position: absolute;
+            animation: bubbleUp linear infinite;
+            will-change: transform;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b-4 border-amber-300 sticky top-0 z-40 px-4 py-3 shadow-sm">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg transform hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold text-amber-600 tracking-wide flex items-center gap-2">
+                        Sight Word <span class="text-indigo-600">Wonder</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium">Learn • Spell • Speak • Use</p>
+                </div>
+            </div>
+
+            <!-- Stats & Settings Controls -->
+            <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
+                <!-- Level Selector -->
+                <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl px-2 py-1 flex items-center gap-1">
+                    <i class="fa-solid fa-layer-group text-indigo-500 text-sm ml-1"></i>
+                    <select id="levelSelect" onchange="changeLevel(this.value)" class="bg-transparent font-bold text-indigo-700 text-sm outline-none cursor-pointer py-1">
+                        <option value="pre-primer">Pre-K / Kindergarten</option>
+                        <option value="primer">Primer Level</option>
+                        <option value="grade1">Grade 1</option>
+                        <option value="grade2">Grade 2</option>
+                    </select>
+                </div>
+
+                <!-- Stars Counter -->
+                <div class="bg-amber-100 border-2 border-amber-300 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+                    <i class="fa-solid fa-star text-amber-500 text-lg animate-bounce"></i>
+                    <span id="starCount" class="font-extrabold text-amber-800 text-lg">0</span>
+                </div>
+
+                <!-- Sound Toggle -->
+                <button onclick="toggleAudio()" id="audioBtn" title="Toggle Audio" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl border-2 border-slate-300 flex items-center justify-center text-slate-700 font-bold transition-all active:scale-95">
+                    <i class="fa-solid fa-volume-high" id="audioIcon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-start">
+
+        <!-- Navigation Tabs Bar -->
+        <nav class="flex flex-wrap justify-center gap-2 mb-6 bg-white/60 p-2 rounded-2xl border-2 border-slate-200 shadow-sm">
+            <button onclick="switchTab('home')" id="tab-home" class="tab-btn bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl shadow transition-all flex items-center gap-2 text-sm sm:text-base">
+                <i class="fa-solid fa-house"></i> Hub
+            </button>
+            <button onclick="switchTab('spelling')" id="tab-spelling" class="tab-btn bg-white hover:bg-indigo-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm sm:text-base">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 1. Spell Builder
+            </button>
+            <button onclick="switchTab('pronounce')" id="tab-pronounce" class="tab-btn bg-white hover:bg-indigo-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm sm:text-base">
+                <i class="fa-solid fa-comment-dots text-emerald-500"></i> 2. Bubble Echo
+            </button>
+            <button onclick="switchTab('usage')" id="tab-usage" class="tab-btn bg-white hover:bg-indigo-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm sm:text-base">
+                <i class="fa-solid fa-puzzle-piece text-rose-500"></i> 3. Sentence Use
+            </button>
+            <button onclick="switchTab('flashcards')" id="tab-flashcards" class="tab-btn bg-white hover:bg-indigo-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm sm:text-base">
+                <i class="fa-solid fa-cards-blank text-purple-500"></i> Deck Cards
+            </button>
+        </nav>
+
+        <!-- VIEW 0: HOME / GAME SELECTION -->
+        <section id="view-home" class="space-y-8 transition-opacity duration-300">
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 z-10 text-center md:text-left">
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase backdrop-blur-sm">Interactive Sight Word Learning</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold leading-tight">Master English Words <br class="hidden sm:inline">with Sound & Play!</h2>
+                    <p class="text-indigo-100 text-sm sm:text-base max-w-lg">
+                        Practice sight word <span class="font-bold underline text-amber-300">Spelling</span>, master natural <span class="font-bold underline text-emerald-300">Pronunciation</span>, and learn <span class="font-bold underline text-pink-300">Contextual Usage</span> with fun audio games!
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-3 justify-center md:justify-start">
+                        <button onclick="switchTab('spelling')" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-extrabold px-6 py-3 rounded-2xl shadow-lg transform hover:-translate-y-1 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> Start Playing Now
+                        </button>
+                        <button onclick="speakText('Welcome to Sight Word Wonder World! Choose a game to start learning.')" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold px-4 py-3 rounded-2xl transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-volume-high"></i> Hear Welcome
+                        </button>
+                    </div>
+                </div>
+                <!-- Cute Mascot SVG -->
+                <div class="z-10 flex-shrink-0 animate-float">
+                    <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-2xl">
+                        <circle cx="100" cy="100" r="90" fill="#FDE047"/>
+                        <circle cx="70" cy="80" r="14" fill="#1E293B"/>
+                        <circle cx="130" cy="80" r="14" fill="#1E293B"/>
+                        <circle cx="74" cy="76" r="5" fill="white"/>
+                        <circle cx="134" cy="76" r="5" fill="white"/>
+                        <path d="M65 125 C80 150, 120 150, 135 125" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+                        <ellipse cx="45" cy="110" rx="12" ry="8" fill="#F87171" opacity="0.6"/>
+                        <ellipse cx="155" cy="110" rx="12" ry="8" fill="#F87171" opacity="0.6"/>
+                        <polygon points="100,15 112,45 145,45 118,65 128,95 100,75 72,95 82,65 55,45 88,45" fill="#F59E0B"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Game Cards Grid -->
+            <div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad text-indigo-500"></i> Choose a Learning Game
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Card 1: Spelling -->
+                    <div onclick="switchTab('spelling')" class="group bg-white hover:bg-amber-50/50 rounded-3xl p-6 border-4 border-amber-200 shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2 flex flex-col justify-between">
+                        <div>
+                            <div class="w-16 h-16 bg-amber-400 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 group-hover:rotate-6 transition-transform shadow-md">
+                                <i class="fa-solid fa-arrow-down-a-z"></i>
+                            </div>
+                            <span class="text-xs font-extrabold uppercase tracking-widest text-amber-600 bg-amber-100 px-3 py-1 rounded-full">Spelling Focus</span>
+                            <h4 class="text-xl font-extrabold text-slate-800 mt-2 mb-1">Spell Builder</h4>
+                            <p class="text-slate-600 text-sm">Listen to the sight word and assemble scrambled letters in the right order to spell it!</p>
+                        </div>
+                        <div class="mt-6 flex items-center justify-between font-bold text-amber-600 text-sm">
+                            <span>Play Game</span>
+                            <i class="fa-solid fa-circle-arrow-right text-lg group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Pronunciation -->
+                    <div onclick="switchTab('pronounce')" class="group bg-white hover:bg-emerald-50/50 rounded-3xl p-6 border-4 border-emerald-200 shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2 flex flex-col justify-between">
+                        <div>
+                            <div class="w-16 h-16 bg-emerald-400 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 group-hover:rotate-6 transition-transform shadow-md">
+                                <i class="fa-solid fa-headset"></i>
+                            </div>
+                            <span class="text-xs font-extrabold uppercase tracking-widest text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">Pronunciation & Audio</span>
+                            <h4 class="text-xl font-extrabold text-slate-800 mt-2 mb-1">Bubble Echo Pop</h4>
+                            <p class="text-slate-600 text-sm">Hear the word pronounced clearly, pop the matching floating word bubbles, or practice speaking out loud!</p>
+                        </div>
+                        <div class="mt-6 flex items-center justify-between font-bold text-emerald-600 text-sm">
+                            <span>Play Game</span>
+                            <i class="fa-solid fa-circle-arrow-right text-lg group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Contextual Use -->
+                    <div onclick="switchTab('usage')" class="group bg-white hover:bg-rose-50/50 rounded-3xl p-6 border-4 border-rose-200 shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2 flex flex-col justify-between">
+                        <div>
+                            <div class="w-16 h-16 bg-rose-400 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 group-hover:rotate-6 transition-transform shadow-md">
+                                <i class="fa-solid fa-feather-pointed"></i>
+                            </div>
+                            <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600 bg-rose-100 px-3 py-1 rounded-full">Sentence Usage</span>
+                            <h4 class="text-xl font-extrabold text-slate-800 mt-2 mb-1">Sentence Detective</h4>
+                            <p class="text-slate-600 text-sm">Fill in missing sight words to complete real sentences. Read and listen to full context!</p>
+                        </div>
+                        <div class="mt-6 flex items-center justify-between font-bold text-rose-600 text-sm">
+                            <span>Play Game</span>
+                            <i class="fa-solid fa-circle-arrow-right text-lg group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Current Level Word Preview -->
+            <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-indigo-500"></i> Word Pool for <span id="wordPoolTitle" class="text-indigo-600">Pre-K / Kindergarten</span>
+                    </h3>
+                    <button onclick="switchTab('flashcards')" class="text-xs font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                        View Flashcards &rarr;
+                    </button>
+                </div>
+                <div id="wordTagsContainer" class="flex flex-wrap gap-2">
+                    <!-- Dynamic Word Tags populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: SPELLING GAME -->
+        <section id="view-spelling" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border-4 border-amber-300 shadow-xl max-w-2xl mx-auto text-center relative">
+                
+                <!-- Game Header & Audio trigger -->
+                <div class="flex items-center justify-between mb-6">
+                    <span class="text-sm font-extrabold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                        Question <span id="spellIndex">1</span>/<span id="spellTotal">10</span>
+                    </span>
+                    <button onclick="playCurrentWordAudio()" class="bg-amber-400 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-xl shadow transition-all flex items-center gap-2 text-sm active:scale-95">
+                        <i class="fa-solid fa-volume-high text-lg animate-pulse"></i> Hear Word
+                    </button>
+                </div>
+
+                <!-- Instruction Prompt -->
+                <p class="text-slate-500 font-semibold mb-2 text-sm">Tap the audio button to hear the word, then tap or drag letters to spell it!</p>
+
+                <!-- Speaker Icon Button Large -->
+                <div class="my-6">
+                    <button onclick="playCurrentWordAudio()" class="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-300 hover:from-amber-500 hover:to-yellow-400 rounded-full mx-auto flex items-center justify-center text-white text-4xl shadow-lg border-4 border-white transition-transform transform active:scale-90">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <p id="spellingPhonetic" class="text-xs text-amber-700 font-bold mt-2 tracking-wide uppercase">Click to listen</p>
+                </div>
+
+                <!-- Word Sentence Hint -->
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6">
+                    <p class="text-xs text-amber-700 uppercase font-extrabold mb-1">Sentence Context Hint:</p>
+                    <p id="spellingSentenceHint" class="lexend text-base sm:text-lg text-slate-700 italic">"..."</p>
+                </div>
+
+                <!-- Target Slot Drop Boxes -->
+                <div class="mb-8">
+                    <div id="spellingTargetSlots" class="flex flex-wrap justify-center gap-2 min-h-[64px]">
+                        <!-- Dynamic letter slots will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Scrambled Letters Pool -->
+                <div class="bg-slate-100 rounded-2xl p-4 border-2 border-slate-200">
+                    <p class="text-xs text-slate-500 font-bold uppercase mb-3">Available Letter Tiles:</p>
+                    <div id="spellingLetterPool" class="flex flex-wrap justify-center gap-2 min-h-[60px]">
+                        <!-- Dynamic letter tiles will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Controls & Feedback -->
+                <div class="mt-8 flex items-center justify-between gap-4">
+                    <button onclick="clearSpellingAnswer()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition-colors text-sm">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    
+                    <button id="spellSubmitBtn" onclick="checkSpellingAnswer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-6 py-3 rounded-xl shadow-lg transition-all text-base flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i> Check Spelling
+                    </button>
+                </div>
+
+                <!-- Feedback Toast Banner -->
+                <div id="spellingFeedback" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-base transition-all"></div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: PRONUNCIATION / BUBBLE ECHO GAME -->
+        <section id="view-pronounce" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border-4 border-emerald-300 shadow-xl max-w-3xl mx-auto relative overflow-hidden">
+                
+                <!-- Game Header -->
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-emerald-700 flex items-center gap-2">
+                            <i class="fa-solid fa-bullhorn"></i> Bubble Echo & Speak
+                        </h3>
+                        <p class="text-xs text-slate-500 font-semibold">Listen to the target word, pop the right bubble, and practice speaking!</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-extrabold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
+                            Target: <span id="pronounceIndex">1</span>/<span id="pronounceTotal">10</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Big Target Word Audio Prompt -->
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white text-center shadow-md mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-center sm:text-left">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-100">Find & Speak This Word:</span>
+                        <div id="targetWordDisplay" class="text-3xl sm:text-4xl font-extrabold tracking-wide my-1">???</div>
+                        <p id="targetWordPhonetics" class="text-xs text-emerald-200">Click speaker button to hear pronunciation</p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <!-- Play Prompt Audio -->
+                        <button onclick="playPronounceTargetAudio()" class="w-14 h-14 bg-white hover:bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-transform active:scale-90">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        
+                        <!-- Speech Recognition Mic (if supported) -->
+                        <button id="micBtn" onclick="startSpeechRecognition()" class="w-14 h-14 bg-amber-400 hover:bg-amber-300 text-amber-950 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-transform active:scale-90 relative" title="Speak to practice pronunciation">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mic Status Banner -->
+                <div id="speechStatus" class="hidden mb-4 p-3 bg-amber-50 border border-amber-300 text-amber-800 text-xs rounded-xl text-center font-bold">
+                    <i class="fa-solid fa-wave-square text-amber-600 animate-pulse mr-1"></i> Listening... Speak the word clearly into your microphone!
+                </div>
+
+                <!-- Interactive Word Bubbles Area -->
+                <div class="relative w-full h-[280px] bg-sky-100 rounded-2xl border-2 border-sky-200 overflow-hidden flex items-center justify-center">
+                    <div id="bubblesContainer" class="absolute inset-0">
+                        <!-- Floating Bubbles injected here -->
+                    </div>
+                    
+                    <div id="bubbleGuideText" class="text-center p-4 text-sky-600 font-bold text-sm pointer-events-none z-0">
+                        <i class="fa-solid fa-hand-pointer text-2xl mb-2 block animate-bounce"></i>
+                        Tap the floating bubble with the correct sight word!
+                    </div>
+                </div>
+
+                <!-- Next Word Button -->
+                <div class="mt-6 flex justify-end">
+                    <button onclick="nextPronounceWord()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-6 py-3 rounded-xl shadow transition-all text-sm flex items-center gap-2">
+                        Next Word <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Feedback Toast -->
+                <div id="pronounceFeedback" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-base transition-all"></div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: SENTENCE USAGE GAME -->
+        <section id="view-usage" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border-4 border-rose-300 shadow-xl max-w-2xl mx-auto relative">
+                
+                <!-- Game Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <span class="text-xs font-extrabold uppercase bg-rose-100 text-rose-800 px-3 py-1 rounded-full">
+                        Context Detective
+                    </span>
+                    <span class="text-sm font-extrabold text-slate-500">
+                        Question <span id="usageIndex">1</span>/<span id="usageTotal">10</span>
+                    </span>
+                </div>
+
+                <!-- Sentence Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-lg mb-8 text-center relative">
+                    <button onclick="readSentenceAloud()" class="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center text-white text-lg transition-all" title="Listen to Sentence">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+
+                    <div class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-4">Complete the Sentence:</div>
+                    
+                    <p id="usageSentenceDisplay" class="lexend text-xl sm:text-2xl leading-relaxed font-semibold">
+                        <!-- Sentence with blank goes here -->
+                    </p>
+                </div>
+
+                <!-- Options Grid -->
+                <p class="text-xs text-slate-500 font-extrabold uppercase mb-3 text-center">Select the missing sight word:</p>
+                <div id="usageOptionsGrid" class="grid grid-cols-2 gap-4">
+                    <!-- Dynamic option buttons injected here -->
+                </div>
+
+                <!-- Feedback Banner -->
+                <div id="usageFeedback" class="hidden mt-6 p-4 rounded-2xl text-center font-bold text-base transition-all"></div>
+
+                <!-- Next Question Button -->
+                <div class="mt-6 flex justify-end">
+                    <button id="usageNextBtn" onclick="nextUsageQuestion()" class="hidden bg-rose-500 hover:bg-rose-600 text-white font-extrabold px-6 py-3 rounded-xl shadow transition-all text-sm items-center gap-2">
+                        Next Challenge <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 4: FLASHCARDS DECK -->
+        <section id="view-flashcards" class="hidden space-y-6">
+            <div class="max-w-md mx-auto">
+                <div class="text-center mb-4">
+                    <h3 class="text-2xl font-extrabold text-slate-800">Interactive Sight Word Cards</h3>
+                    <p class="text-xs text-slate-500 font-semibold">Tap card to flip • Click audio to hear</p>
+                </div>
+
+                <!-- Flip Card Container -->
+                <div class="flip-card w-full h-[320px] cursor-pointer" onclick="toggleFlashcardFlip(this)">
+                    <div class="flip-card-inner relative w-full h-full rounded-3xl shadow-2xl border-4 border-indigo-300">
+                        
+                        <!-- CARD FRONT -->
+                        <div class="flip-card-front absolute inset-0 bg-white rounded-3xl p-6 flex flex-col items-center justify-between">
+                            <div class="w-full flex justify-between items-center text-xs font-bold text-indigo-500">
+                                <span id="fcCategory" class="bg-indigo-50 px-3 py-1 rounded-full uppercase">Level</span>
+                                <span>Tap card to flip <i class="fa-solid fa-rotate"></i></span>
+                            </div>
+
+                            <div class="text-center my-auto">
+                                <h2 id="fcWord" class="text-5xl font-black text-slate-800 tracking-wide mb-2">word</h2>
+                                <p id="fcPhonetics" class="text-sm font-bold text-indigo-600 uppercase tracking-widest">/ph-o-ne-tic/</p>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); playFlashcardAudio();" class="w-12 h-12 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-2xl flex items-center justify-center text-xl shadow transition-transform active:scale-90">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+
+                        <!-- CARD BACK -->
+                        <div class="flip-card-back absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-3xl p-6 flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-xs font-bold text-indigo-200">
+                                <span>Spelling Breakdown</span>
+                                <span><i class="fa-solid fa-rotate"></i> Flip Back</span>
+                            </div>
+
+                            <div class="space-y-4 my-auto">
+                                <div>
+                                    <span class="text-xs uppercase text-indigo-200 font-bold block mb-1">Letters & Spell:</span>
+                                    <div id="fcLetterBreakdown" class="flex flex-wrap gap-1.5 justify-center">
+                                        <!-- Spelled out letter pills -->
+                                    </div>
+                                </div>
+
+                                <div class="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20">
+                                    <span class="text-xs uppercase text-amber-300 font-extrabold block mb-1">Sentence Usage:</span>
+                                    <p id="fcSentence" class="lexend text-sm sm:text-base italic text-indigo-50">"..."</p>
+                                </div>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); playFlashcardSentenceAudio();" class="w-full bg-white/20 hover:bg-white/30 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-volume-high"></i> Hear Sentence Context
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex items-center justify-between mt-6">
+                    <button onclick="prevFlashcard()" class="bg-white hover:bg-slate-100 text-slate-700 font-bold px-4 py-2.5 rounded-xl border-2 border-slate-200 shadow-sm text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </button>
+                    <span class="text-sm font-extrabold text-slate-600">
+                        <span id="fcCurrentIndex">1</span> / <span id="fcTotalCount">10</span>
+                    </span>
+                    <button onclick="nextFlashcard()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl shadow text-sm flex items-center gap-2">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/60 border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+        <p>Sight Word Wonder World • Fun Educational App for Early Readers</p>
+    </footer>
+
+    <script>
+        // Sight Words Database categorized by level
+        const SIGHT_WORDS_DB = {
+            'pre-primer': [
+                { word: 'the', phonetics: 'th-uh', sentence: '___ dog played in the park.', blank: '___' },
+                { word: 'and', phonetics: 'ae-n-d', sentence: 'I like apples ___ bananas.', blank: '___' },
+                { word: 'see', phonetics: 's-ee', sentence: 'I ___ a yellow star.', blank: '___' },
+                { word: 'can', phonetics: 'k-ae-n', sentence: 'She ___ run fast.', blank: '___' },
+                { word: 'big', phonetics: 'b-i-g', sentence: 'That is a ___ red ball.', blank: '___' },
+                { word: 'you', phonetics: 'y-oo', sentence: 'Are ___ ready to play?', blank: '___' },
+                { word: 'look', phonetics: 'l-oo-k', sentence: '___ at the beautiful rainbow!', blank: '___' },
+                { word: 'help', phonetics: 'h-e-l-p', sentence: 'Can you ___ me find my book?', blank: '___' },
+                { word: 'play', phonetics: 'p-l-ay', sentence: 'We love to ___ games together.', blank: '___' },
+                { word: 'run', phonetics: 'r-u-n', sentence: 'The puppy likes to ___ outside.', blank: '___' }
+            ],
+            'primer': [
+                { word: 'all', phonetics: 'aw-l', sentence: '___ the kids are happy.', blank: '___' },
+                { word: 'have', phonetics: 'h-ae-v', sentence: 'They ___ two cute kittens.', blank: '___' },
+                { word: 'like', phonetics: 'l-ie-k', sentence: 'I ___ chocolate ice cream.', blank: '___' },
+                { word: 'must', phonetics: 'm-u-s-t', sentence: 'We ___ wash our hands before eating.', blank: '___' },
+                { word: 'new', phonetics: 'n-oo', sentence: 'He got a ___ blue bicycle.', blank: '___' },
+                { word: 'pretty', phonetics: 'p-r-i-t-ee', sentence: 'She wore a ___ flower crown.', blank: '___' },
+                { word: 'there', phonetics: 'th-air', sentence: 'Look over ___, a flying bird!', blank: '___' },
+                { word: 'under', phonetics: 'u-n-d-er', sentence: 'The cat slept ___ the table.', blank: '___' },
+                { word: 'want', phonetics: 'w-ah-n-t', sentence: 'I ___ to learn how to swim.', blank: '___' },
+                { word: 'white', phonetics: 'w-ie-t', sentence: 'Snow is cold and ___.', blank: '___' }
+            ],
+            'grade1': [
+                { word: 'after', phonetics: 'ae-f-t-er', sentence: 'We went to the park ___ school.', blank: '___' },
+                { word: 'again', phonetics: 'uh-g-e-n', sentence: 'Please read that story ___!', blank: '___' },
+                { word: 'could', phonetics: 'k-oo-d', sentence: 'She ___ jump really high.', blank: '___' },
+                { word: 'every', phonetics: 'e-v-r-ee', sentence: 'He reads a book ___ single day.', blank: '___' },
+                { word: 'give', phonetics: 'g-i-v', sentence: 'Please ___ me a high five.', blank: '___' },
+                { word: 'know', phonetics: 'n-oh', sentence: 'Do you ___ the answer to this riddle?', blank: '___' },
+                { word: 'some', phonetics: 's-u-m', sentence: 'Would you like ___ warm cookies?', blank: '___' },
+                { word: 'think', phonetics: 'th-i-ng-k', sentence: 'I ___ it is going to rain today.', blank: '___' },
+                { word: 'walk', phonetics: 'w-aw-k', sentence: 'Let us take a ___ around the lake.', blank: '___' },
+                { word: 'when', phonetics: 'w-e-n', sentence: 'Call me ___ you reach home.', blank: '___' }
+            ],
+            'grade2': [
+                { word: 'always', phonetics: 'aw-l-w-ay-z', sentence: 'She ___ shares her toys with friends.', blank: '___' },
+                { word: 'because', phonetics: 'b-ee-k-aw-z', sentence: 'I am smiling ___ I am happy.', blank: '___' },
+                { word: 'before', phonetics: 'b-ee-f-or', sentence: 'Brush your teeth ___ going to bed.', blank: '___' },
+                { word: 'found', phonetics: 'f-ow-n-d', sentence: 'He ___ a shiny coin on the path.', blank: '___' },
+                { word: 'green', phonetics: 'g-r-ee-n', sentence: 'The grass is soft and ___.', blank: '___' },
+                { word: 'right', phonetics: 'r-ie-t', sentence: 'Turn ___ at the corner stop sign.', blank: '___' },
+                { word: 'their', phonetics: 'th-air', sentence: 'They parked ___ car in the garage.', blank: '___' },
+                { word: 'which', phonetics: 'w-i-ch', sentence: '___ game do you want to play next?', blank: '___' },
+                { word: 'wish', phonetics: 'w-i-sh', sentence: 'Make a ___ before blowing the candle!', blank: '___' },
+                { word: 'would', phonetics: 'w-oo-d', sentence: '___ you like to draw a picture with me?', blank: '___' }
+            ]
+        };
+
+        // Global State
+        let currentLevel = 'pre-primer';
+        let currentWordsList = [];
+        let stars = 0;
+        let audioEnabled = true;
+
+        // Spelling Game State
+        let spellCurrentIndex = 0;
+        let spellSelectedLetters = [];
+
+        // Pronunciation Game State
+        let pronounceCurrentIndex = 0;
+        let bubbleInterval = null;
+
+        // Usage Game State
+        let usageCurrentIndex = 0;
+        let usageQuestions = [];
+
+        // Flashcards State
+        let flashcardIndex = 0;
+
+        // Web Audio API Synthesizer (No external audio files needed)
+        const AudioFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone(freq, type, duration) {
+                if (!audioEnabled) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type || 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            correct() {
+                this.playTone(523.25, 'sine', 0.15); // C5
+                setTimeout(() => this.playTone(659.25, 'sine', 0.15), 100); // E5
+                setTimeout(() => this.playTone(783.99, 'sine', 0.25), 200); // G5
+            },
+            wrong() {
+                this.playTone(220, 'triangle', 0.2);
+                setTimeout(() => this.playTone(180, 'triangle', 0.25), 150);
+            },
+            pop() {
+                this.playTone(800, 'sine', 0.08);
+            },
+            star() {
+                this.playTone(987.77, 'sine', 0.2);
+            }
+        };
+
+        // Speech Synthesis Helper
+        function speakText(text, rate = 0.85) {
+            if (!audioEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); // Stop ongoing speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = rate; // Slightly slower for kids
+            utterance.pitch = 1.1; // Friendly pitch
+            
+            // Try to pick an English voice
+            const voices = window.speechSynthesis.getVoices();
+            const englishVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
+            if (englishVoice) utterance.voice = englishVoice;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Window Load Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            changeLevel('pre-primer');
+            // Warm up speech voices
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+            }
+        });
+
+        // Toggle Audio
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audioIcon');
+            const btn = document.getElementById('audioBtn');
+            if (audioEnabled) {
+                icon.className = "fa-solid fa-volume-high text-slate-700";
+                btn.className = "w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl border-2 border-slate-300 flex items-center justify-center font-bold transition-all active:scale-95";
+                speakText("Audio enabled");
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-rose-500";
+                btn.className = "w-10 h-10 bg-rose-50 rounded-xl border-2 border-rose-300 flex items-center justify-center font-bold transition-all active:scale-95";
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        // Change Grade / Word Level
+        function changeLevel(levelKey) {
+            currentLevel = levelKey;
+            currentWordsList = SIGHT_WORDS_DB[levelKey] || SIGHT_WORDS_DB['pre-primer'];
+            
+            // Update Title
+            const titles = {
+                'pre-primer': 'Pre-K / Kindergarten',
+                'primer': 'Primer Level',
+                'grade1': 'Grade 1 Level',
+                'grade2': 'Grade 2 Level'
+            };
+            document.getElementById('wordPoolTitle').innerText = titles[levelKey];
+
+            // Render word preview tags
+            const container = document.getElementById('wordTagsContainer');
+            container.innerHTML = '';
+            currentWordsList.forEach(item => {
+                const tag = document.createElement('button');
+                tag.className = 'bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 font-extrabold px-3 py-1.5 rounded-xl text-sm transition-transform active:scale-95 flex items-center gap-1.5';
+                tag.innerHTML = `<span>${item.word}</span> <i class="fa-solid fa-volume-high text-xs text-indigo-400"></i>`;
+                tag.onclick = () => speakText(item.word);
+                container.appendChild(tag);
+            });
+
+            // Reset Game States
+            spellCurrentIndex = 0;
+            pronounceCurrentIndex = 0;
+            usageCurrentIndex = 0;
+            flashcardIndex = 0;
+
+            // Refresh Active View
+            initSpellingGame();
+            initPronounceGame();
+            initUsageGame();
+            updateFlashcardUI();
+        }
+
+        // Switch Navigation Tabs
+        function switchTab(tabId) {
+            const tabs = ['home', 'spelling', 'pronounce', 'usage', 'flashcards'];
+            tabs.forEach(t => {
+                const viewEl = document.getElementById(`view-${t}`);
+                const tabBtn = document.getElementById(`tab-${t}`);
+                if (t === tabId) {
+                    viewEl.classList.remove('hidden');
+                    tabBtn.className = "tab-btn bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl shadow transition-all flex items-center gap-2 text-sm sm:text-base";
+                } else {
+                    viewEl.classList.add('hidden');
+                    tabBtn.className = "tab-btn bg-white hover:bg-indigo-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm sm:text-base";
+                }
+            });
+
+            // Clean up bubble animation if leaving pronounce tab
+            if (tabId !== 'pronounce' && bubbleInterval) {
+                clearInterval(bubbleInterval);
+            } else if (tabId === 'pronounce') {
+                initPronounceGame();
+            }
+        }
+
+        // Add Stars
+        function addStars(amount = 1) {
+            stars += amount;
+            document.getElementById('starCount').innerText = stars;
+            AudioFX.star();
+        }
+
+        // =========================================================
+        // GAME 1: SPELLING BUILDER LOGIC
+        // =========================================================
+        function initSpellingGame() {
+            if (currentWordsList.length === 0) return;
+            const wordObj = currentWordsList[spellCurrentIndex];
+            
+            document.getElementById('spellIndex').innerText = spellCurrentIndex + 1;
+            document.getElementById('spellTotal').innerText = currentWordsList.length;
+            document.getElementById('spellingSentenceHint').innerText = `"${wordObj.sentence}"`;
+            document.getElementById('spellingPhonetic').innerText = `Phonics hint: / ${wordObj.phonetics} /`;
+            document.getElementById('spellingFeedback').className = 'hidden';
+
+            spellSelectedLetters = [];
+            renderSpellingSlotsAndPool(wordObj.word);
+        }
+
+        function renderSpellingSlotsAndPool(targetWord) {
+            const slotsContainer = document.getElementById('spellingTargetSlots');
+            const poolContainer = document.getElementById('spellingLetterPool');
+            
+            slotsContainer.innerHTML = '';
+            poolContainer.innerHTML = '';
+
+            // Render Target Blank Slots
+            for (let i = 0; i < targetWord.length; i++) {
+                const slot = document.createElement('div');
+                const selectedChar = spellSelectedLetters[i];
+                if (selectedChar) {
+                    slot.className = 'w-12 h-14 sm:w-14 sm:h-16 bg-amber-400 text-amber-950 font-black text-2xl sm:text-3xl rounded-2xl border-4 border-amber-500 shadow-md flex items-center justify-center transform scale-105 transition-transform cursor-pointer';
+                    slot.innerText = selectedChar.letter.toUpperCase();
+                    slot.onclick = () => removeLetterFromSlot(i);
+                } else {
+                    slot.className = 'w-12 h-14 sm:w-14 sm:h-16 bg-white border-4 border-dashed border-amber-300 rounded-2xl flex items-center justify-center text-slate-300 font-bold text-2xl';
+                    slot.innerText = '_';
+                }
+                slotsContainer.appendChild(slot);
+            }
+
+            // Create scrambled letters array with unique IDs
+            let letterObjects = targetWord.split('').map((char, index) => ({ id: index, letter: char }));
+            // Shuffle letters
+            letterObjects.sort(() => Math.random() - 0.5);
+
+            // Render Letter Pool Tiles
+            letterObjects.forEach(obj => {
+                const isUsed = spellSelectedLetters.some(sel => sel.id === obj.id);
+                const tile = document.createElement('button');
+                if (isUsed) {
+                    tile.className = 'w-12 h-12 bg-slate-200 text-slate-400 font-extrabold text-xl rounded-xl border-2 border-slate-300 opacity-40 cursor-not-allowed';
+                    tile.disabled = true;
+                } else {
+                    tile.className = 'w-12 h-12 bg-white hover:bg-amber-100 text-slate-800 font-extrabold text-xl sm:text-2xl rounded-xl border-3 border-slate-300 hover:border-amber-400 shadow transition-all active:scale-95';
+                    tile.onclick = () => selectLetterTile(obj);
+                }
+                tile.innerText = obj.letter.toUpperCase();
+                poolContainer.appendChild(tile);
+            });
+        }
+
+        function selectLetterTile(letterObj) {
+            const wordObj = currentWordsList[spellCurrentIndex];
+            if (spellSelectedLetters.length < wordObj.word.length) {
+                spellSelectedLetters.push(letterObj);
+                AudioFX.pop();
+                speakText(letterObj.letter, 1.1);
+                renderSpellingSlotsAndPool(wordObj.word);
+            }
+        }
+
+        function removeLetterFromSlot(index) {
+            if (spellSelectedLetters[index]) {
+                spellSelectedLetters.splice(index, 1);
+                AudioFX.pop();
+                const wordObj = currentWordsList[spellCurrentIndex];
+                renderSpellingSlotsAndPool(wordObj.word);
+            }
+        }
+
+        function clearSpellingAnswer() {
+            spellSelectedLetters = [];
+            const wordObj = currentWordsList[spellCurrentIndex];
+            renderSpellingSlotsAndPool(wordObj.word);
+        }
+
+        function playCurrentWordAudio() {
+            const wordObj = currentWordsList[spellCurrentIndex];
+            speakText(wordObj.word);
+        }
+
+        function checkSpellingAnswer() {
+            const wordObj = currentWordsList[spellCurrentIndex];
+            const userAttempt = spellSelectedLetters.map(l => l.letter).join('');
+            const feedbackEl = document.getElementById('spellingFeedback');
+
+            feedbackEl.classList.remove('hidden');
+
+            if (userAttempt === wordObj.word) {
+                // Correct!
+                AudioFX.correct();
+                addStars(2);
+                feedbackEl.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-base bg-emerald-100 border-2 border-emerald-400 text-emerald-800 animate-bounce';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check text-xl mr-2"></i> Fantastic! "${wordObj.word.toUpperCase()}" is spelled correctly! (+2 Stars ⭐)`;
+                speakText(`Awesome job! ${wordObj.word}`);
+
+                setTimeout(() => {
+                    spellCurrentIndex = (spellCurrentIndex + 1) % currentWordsList.length;
+                    initSpellingGame();
+                }, 2000);
+            } else {
+                // Wrong
+                AudioFX.wrong();
+                feedbackEl.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-base bg-rose-100 border-2 border-rose-400 text-rose-800';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl mr-2"></i> Not quite yet! Listen again and give it another try.`;
+                speakText(`Try again. Listen: ${wordObj.word}`);
+            }
+        }
+
+        // =========================================================
+        // GAME 2: PRONUNCIATION / BUBBLE ECHO LOGIC
+        // =========================================================
+        function initPronounceGame() {
+            if (currentWordsList.length === 0) return;
+            const targetObj = currentWordsList[pronounceCurrentIndex];
+
+            document.getElementById('pronounceIndex').innerText = pronounceCurrentIndex + 1;
+            document.getElementById('pronounceTotal').innerText = currentWordsList.length;
+            document.getElementById('targetWordDisplay').innerText = targetObj.word.toUpperCase();
+            document.getElementById('targetWordPhonetics').innerText = `Phonetics: /${targetObj.phonetics}/`;
+            document.getElementById('pronounceFeedback').className = 'hidden';
+
+            spawnWordBubbles();
+        }
+
+        function playPronounceTargetAudio() {
+            const targetObj = currentWordsList[pronounceCurrentIndex];
+            speakText(targetObj.word);
+        }
+
+        function spawnWordBubbles() {
+            const container = document.getElementById('bubblesContainer');
+            container.innerHTML = '';
+
+            if (bubbleInterval) clearInterval(bubbleInterval);
+
+            const targetWordObj = currentWordsList[pronounceCurrentIndex];
+            
+            // Generate distractor words from current list
+            let optionsPool = [targetWordObj.word];
+            let otherWords = currentWordsList.filter(w => w.word !== targetWordObj.word).map(w => w.word);
+            otherWords.sort(() => Math.random() - 0.5);
+            optionsPool = optionsPool.concat(otherWords.slice(0, 4));
+
+            // Create 6 floating bubbles
+            for (let i = 0; i < 6; i++) {
+                const wordChoice = optionsPool[i % optionsPool.length];
+                createSingleBubble(container, wordChoice, targetWordObj.word);
+            }
+
+            // Continuously replenish bubbles
+            bubbleInterval = setInterval(() => {
+                if (document.getElementById('view-pronounce').classList.contains('hidden')) return;
+                const wordChoice = optionsPool[Math.floor(Math.random() * optionsPool.length)];
+                createSingleBubble(container, wordChoice, targetWordObj.word);
+            }, 2500);
+        }
+
+        function createSingleBubble(container, text, correctWord) {
+            const bubble = document.createElement('div');
+            const leftPos = Math.floor(Math.random() * 75) + 5; // 5% to 80% width
+            const animDuration = Math.floor(Math.random() * 4) + 6; // 6s to 10s
+
+            const isCorrect = (text === correctWord);
+
+            bubble.className = 'bubble-item bg-white/90 hover:bg-emerald-200 border-4 border-emerald-400 text-emerald-950 font-black text-lg sm:text-xl px-5 py-3 rounded-full shadow-lg cursor-pointer transform hover:scale-110 transition-transform flex items-center justify-center gap-2';
+            bubble.style.left = `${leftPos}%`;
+            bubble.style.animationDuration = `${animDuration}s`;
+            bubble.style.bottom = '-60px';
+
+            bubble.innerHTML = `<span>${text}</span> <i class="fa-solid fa-volume-low text-xs text-emerald-600"></i>`;
+
+            bubble.onclick = (e) => {
+                e.stopPropagation();
+                AudioFX.pop();
+                speakText(text);
+
+                const feedbackEl = document.getElementById('pronounceFeedback');
+                feedbackEl.classList.remove('hidden');
+
+                if (isCorrect) {
+                    AudioFX.correct();
+                    addStars(2);
+                    feedbackEl.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-base bg-emerald-100 border-2 border-emerald-400 text-emerald-800 animate-bounce';
+                    feedbackEl.innerHTML = `<i class="fa-solid fa-star text-amber-500 text-xl mr-2"></i> Correct! You popped "${text.toUpperCase()}"! (+2 Stars ⭐)`;
+                    
+                    // Pop animation
+                    bubble.style.transform = 'scale(1.5)';
+                    bubble.style.opacity = '0';
+                    setTimeout(() => bubble.remove(), 200);
+
+                    setTimeout(() => {
+                        pronounceCurrentIndex = (pronounceCurrentIndex + 1) % currentWordsList.length;
+                        initPronounceGame();
+                    }, 1800);
+                } else {
+                    AudioFX.wrong();
+                    feedbackEl.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-base bg-rose-100 border-2 border-rose-400 text-rose-800';
+                    feedbackEl.innerHTML = `That was "${text}". Find "${correctWord.toUpperCase()}"!`;
+                }
+            };
+
+            container.appendChild(bubble);
+
+            // Auto cleanup after animation ends
+            setTimeout(() => {
+                if (bubble.parentNode) bubble.remove();
+            }, animDuration * 1000);
+        }
+
+        // Web Speech API Microphone Pronunciation Test
+        function startSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                const statusEl = document.getElementById('speechStatus');
+                statusEl.classList.remove('hidden');
+                statusEl.innerText = "Voice recognition is not supported on this browser. Try Chrome or Safari!";
+                setTimeout(() => statusEl.classList.add('hidden'), 4000);
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            const statusEl = document.getElementById('speechStatus');
+            const micBtn = document.getElementById('micBtn');
+
+            statusEl.classList.remove('hidden');
+            micBtn.classList.add('animate-ping');
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                micBtn.classList.remove('animate-ping');
+                const spokenText = event.results[0][0].transcript.toLowerCase().trim();
+                const targetObj = currentWordsList[pronounceCurrentIndex];
+                
+                statusEl.innerHTML = `You said: "<span class="underline font-bold">${spokenText}</span>"`;
+
+                if (spokenText.includes(targetObj.word.toLowerCase())) {
+                    AudioFX.correct();
+                    addStars(3);
+                    statusEl.className = "mb-4 p-3 bg-emerald-100 border border-emerald-400 text-emerald-800 text-xs rounded-xl text-center font-bold";
+                    statusEl.innerHTML = `🎉 Great pronunciation! You said "${targetObj.word}" perfectly! (+3 Stars ⭐)`;
+                } else {
+                    AudioFX.wrong();
+                    statusEl.className = "mb-4 p-3 bg-rose-100 border border-rose-400 text-rose-800 text-xs rounded-xl text-center font-bold";
+                    statusEl.innerHTML = `You said "${spokenText}". Try saying "${targetObj.word}" clearly again!`;
+                }
+            };
+
+            recognition.onerror = () => {
+                micBtn.classList.remove('animate-ping');
+                statusEl.innerText = "Could not hear audio clearly. Please try clicking the mic again!";
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove('animate-ping');
+            };
+        }
+
+        // =========================================================
+        // GAME 3: SENTENCE USAGE LOGIC
+        // =========================================================
+        function initUsageGame() {
+            if (currentWordsList.length === 0) return;
+            const currentQuestion = currentWordsList[usageCurrentIndex];
+
+            document.getElementById('usageIndex').innerText = usageCurrentIndex + 1;
+            document.getElementById('usageTotal').innerText = currentWordsList.length;
+            document.getElementById('usageFeedback').className = 'hidden';
+            document.getElementById('usageNextBtn').classList.add('hidden');
+
+            // Form sentence with blank
+            const sentenceWithBlank = currentQuestion.sentence.replace(currentQuestion.word, '_______');
+            document.getElementById('usageSentenceDisplay').innerText = sentenceWithBlank;
+
+            // Generate 4 options
+            let options = [currentQuestion.word];
+            let distractors = currentWordsList.filter(w => w.word !== currentQuestion.word).map(w => w.word);
+            distractors.sort(() => Math.random() - 0.5);
+            options = options.concat(distractors.slice(0, 3));
+            options.sort(() => Math.random() - 0.5); // Shuffle options
+
+            const optionsGrid = document.getElementById('usageOptionsGrid');
+            optionsGrid.innerHTML = '';
+
+            options.forEach(optionText => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-white hover:bg-rose-50 border-3 border-rose-200 hover:border-rose-400 text-slate-800 font-extrabold text-xl sm:text-2xl py-4 rounded-2xl shadow transition-all transform active:scale-95 flex items-center justify-center gap-2';
+                btn.innerHTML = `<span>${optionText}</span>`;
+                btn.onclick = () => selectUsageOption(optionText, currentQuestion, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            // Automatically read sentence hint aloud
+            setTimeout(() => readSentenceAloud(), 400);
+        }
+
+        function readSentenceAloud() {
+            const currentQuestion = currentWordsList[usageCurrentIndex];
+            // Read filled sentence so kids hear correct context
+            speakText(currentQuestion.sentence);
+        }
+
+        function selectUsageOption(selectedWord, questionObj, buttonEl) {
+            const feedbackEl = document.getElementById('usageFeedback');
+            const nextBtn = document.getElementById('usageNextBtn');
+            feedbackEl.classList.remove('hidden');
+
+            if (selectedWord === questionObj.word) {
+                // Correct!
+                AudioFX.correct();
+                addStars(2);
+                
+                // Show completed sentence
+                document.getElementById('usageSentenceDisplay').innerHTML = questionObj.sentence.replace(
+                    questionObj.word, 
+                    `<span class="text-amber-400 font-extrabold underline decoration-amber-400">${questionObj.word}</span>`
+                );
+
+                buttonEl.className = 'bg-emerald-500 border-3 border-emerald-600 text-white font-extrabold text-xl sm:text-2xl py-4 rounded-2xl shadow-lg transition-all scale-105';
+
+                feedbackEl.className = 'mt-6 p-4 rounded-2xl text-center font-bold text-base bg-emerald-100 border-2 border-emerald-400 text-emerald-800 animate-bounce';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check text-xl mr-2"></i> Correct! "${questionObj.word}" fits the sentence perfectly! (+2 Stars ⭐)`;
+
+                speakText(`Correct! ${questionObj.sentence}`);
+                nextBtn.classList.remove('hidden');
+                nextBtn.classList.add('flex');
+
+            } else {
+                // Wrong
+                AudioFX.wrong();
+                buttonEl.className = 'bg-rose-100 border-3 border-rose-300 text-rose-700 font-bold text-xl sm:text-2xl py-4 rounded-2xl opacity-60';
+                
+                feedbackEl.className = 'mt-6 p-4 rounded-2xl text-center font-bold text-base bg-rose-100 border-2 border-rose-400 text-rose-800';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl mr-2"></i> Try another word! Which word makes sense here?`;
+                speakText("Try another word");
+            }
+        }
+
+        function nextUsageQuestion() {
+            usageCurrentIndex = (usageCurrentIndex + 1) % currentWordsList.length;
+            initUsageGame();
+        }
+
+        // =========================================================
+        // FLASHCARDS DECK LOGIC
+        // =========================================================
+        function updateFlashcardUI() {
+            if (currentWordsList.length === 0) return;
+            const wordObj = currentWordsList[flashcardIndex];
+
+            document.getElementById('fcCurrentIndex').innerText = flashcardIndex + 1;
+            document.getElementById('fcTotalCount').innerText = currentWordsList.length;
+            document.getElementById('fcCategory').innerText = currentLevel.toUpperCase();
+            document.getElementById('fcWord').innerText = wordObj.word;
+            document.getElementById('fcPhonetics').innerText = `/${wordObj.phonetics}/`;
+            document.getElementById('fcSentence').innerText = `"${wordObj.sentence}"`;
+
+            // Render individual spelling letter badges
+            const letterBox = document.getElementById('fcLetterBreakdown');
+            letterBox.innerHTML = '';
+            wordObj.word.split('').forEach(char => {
+                const badge = document.createElement('span');
+                badge.className = 'w-9 h-9 bg-white/20 border border-white/40 rounded-xl flex items-center justify-center text-lg font-black text-white shadow-sm';
+                badge.innerText = char.toUpperCase();
+                letterBox.appendChild(badge);
+            });
+
+            // Ensure card is un-flipped on card change
+            const flipContainer = document.querySelector('.flip-card');
+            if (flipContainer) flipContainer.classList.remove('flipped');
+        }
+
+        function toggleFlashcardFlip(cardEl) {
+            cardEl.classList.toggle('flipped');
+            AudioFX.pop();
+        }
+
+        function playFlashcardAudio() {
+            const wordObj = currentWordsList[flashcardIndex];
+            speakText(wordObj.word);
+        }
+
+        function playFlashcardSentenceAudio() {
+            const wordObj = currentWordsList[flashcardIndex];
+            speakText(wordObj.sentence);
+        }
+
+        function nextFlashcard() {
+            flashcardIndex = (flashcardIndex + 1) % currentWordsList.length;
+            updateFlashcardUI();
+        }
+
+        function prevFlashcard() {
+            flashcardIndex = (flashcardIndex - 1 + currentWordsList.length) % currentWordsList.length;
+            updateFlashcardUI();
+        }
+    </script>
+</body>
+</html>
